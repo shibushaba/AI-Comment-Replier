@@ -19,12 +19,63 @@ from langchain_core.runnables import RunnableLambda
 
 st.set_page_config(
     page_title="AI Comment Reply Helper",
-    page_icon="💬",
     layout="centered"
 )
 
-st.title("💬 AI Comment Reply Helper")
-st.caption("Platform-aware • Tone-controlled • Creator-friendly")
+# ------------------ Global Minimal Styling ------------------
+
+st.markdown("""
+<style>
+.stApp {
+    background-color: #ffffff;
+}
+
+/* Headings */
+h2, h3, h4 {
+    color: #111827;
+}
+
+/* Buttons */
+.stButton > button {
+    background-color: #111827;
+    color: white;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    border: none;
+}
+
+.stButton > button:hover {
+    background-color: #1f2937;
+}
+
+/* Inputs */
+textarea, select {
+    border-radius: 6px !important;
+}
+
+/* Code blocks */
+pre {
+    background-color: #f9fafb !important;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+/* Containers */
+[data-testid="stContainer"] {
+    border-radius: 8px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ------------------ Header ------------------
+
+st.markdown("""
+<h2>AI Comment Reply Helper</h2>
+<p style="color:#6b7280; margin-top:4px;">
+Generate platform-aware, tone-perfect replies for creators and professionals
+</p>
+<hr style="margin: 1.5rem 0;">
+""", unsafe_allow_html=True)
 
 # ------------------ API KEY ------------------
 
@@ -32,7 +83,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
 if not GOOGLE_API_KEY:
     st.error(
-        "❌ Gemini API key not found.\n\n"
+        "Gemini API key not found.\n\n"
         "Set it using:\n"
         "setx GOOGLE_API_KEY \"YOUR_API_KEY\""
     )
@@ -54,13 +105,12 @@ MODEL_NAME = get_supported_model()
 
 if not MODEL_NAME:
     st.error(
-        "❌ No Gemini text-generation models available for this API key.\n\n"
-        "Your Google project does not have access to Generative Language models.\n"
-        "Enable **Generative Language API** in Google AI Studio or switch provider."
+        "No Gemini text-generation models available for this API key.\n\n"
+        "Enable Generative Language API in Google AI Studio."
     )
     st.stop()
 
-st.success(f"✅ Using Gemini model: `{MODEL_NAME}`")
+st.caption(f"Model in use: {MODEL_NAME}")
 
 model = genai.GenerativeModel(MODEL_NAME)
 
@@ -130,12 +180,15 @@ llm = RunnableLambda(gemini_call)
 
 chain = prompt | llm | parser
 
-# ------------------ UI ------------------
+# ------------------ Input UI ------------------
 
 with st.container(border=True):
+    st.markdown("#### Input")
+
     comment = st.text_area(
-        "Paste the comment you received",
-        placeholder="This video was really helpful, thanks!"
+        "Comment",
+        placeholder="This video was really helpful, thanks!",
+        height=120
     )
 
     col1, col2 = st.columns(2)
@@ -147,25 +200,29 @@ with st.container(border=True):
         )
 
     with col2:
-        tone = st.select_slider(
+        tone = st.selectbox(
             "Tone",
             ["Casual", "Friendly", "Professional", "Formal"],
-            value="Friendly"
+            index=1
         )
 
-generate = st.button("✨ Generate Replies", use_container_width=True)
+    generate = st.button("Generate Replies", use_container_width=True)
+
+# ------------------ Reply Card ------------------
 
 def reply_card(title, text):
     with st.container(border=True):
         st.markdown(f"**{title}**")
-        st.write(text)
-        st.code(text)
-        st.button("📋 Copy", key=str(uuid.uuid4()))
+        st.markdown(
+            f"<div style='color:#374151; margin-top:8px;'>{text}</div>",
+            unsafe_allow_html=True
+        )
+        st.code(text, language="text")
 
 # ------------------ Output ------------------
 
 if generate and comment.strip():
-    with st.spinner("Crafting replies..."):
+    with st.spinner("Generating replies..."):
         replies = chain.invoke({
             "comment": comment,
             "platform": platform,
@@ -173,11 +230,11 @@ if generate and comment.strip():
         })
         save_reply(comment, platform, tone, replies)
 
-    st.success("Replies ready 👇")
+    st.markdown("### Generated Replies")
 
-    reply_card("😊 Friendly Reply", replies.friendly_reply)
-    reply_card("💼 Professional Reply", replies.professional_reply)
-    reply_card("🚀 Engagement-Boosting Reply", replies.engagement_boosting_reply)
+    reply_card("Friendly Reply", replies.friendly_reply)
+    reply_card("Professional Reply", replies.professional_reply)
+    reply_card("Engagement-Boosting Reply", replies.engagement_boosting_reply)
 
 elif generate:
-    st.warning("Please enter a comment first.")
+    st.warning("Please enter a comment to continue.")
