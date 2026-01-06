@@ -1,0 +1,6 @@
+streamlit
+pydantic
+google-generativeai
+langchain
+langchain-core
+chromadb
