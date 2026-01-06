@@ -22,7 +22,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# ------------------ Global Minimal Styling ------------------
+# ------------------ Global Styling ------------------
 
 st.markdown("""
 <style>
@@ -30,51 +30,77 @@ st.markdown("""
     background-color: #ffffff;
 }
 
-/* Headings */
-h2, h3, h4 {
-    color: #111827;
+/* Hero */
+.hero {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    padding: 3rem 2.5rem;
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 2.5rem;
+}
+.hero h1 {
+    font-size: 2.4rem;
+    margin-bottom: 0.5rem;
+}
+.hero p {
+    color: #cbd5f5;
+    max-width: 650px;
+    font-size: 1.05rem;
 }
 
 /* Buttons */
 .stButton > button {
-    background-color: #111827;
+    background-color: #0f172a;
     color: white;
-    border-radius: 6px;
-    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
     border: none;
+    font-weight: 500;
 }
 
 .stButton > button:hover {
-    background-color: #1f2937;
+    background-color: #020617;
 }
 
 /* Inputs */
 textarea, select {
-    border-radius: 6px !important;
-}
-
-/* Code blocks */
-pre {
-    background-color: #f9fafb !important;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
+    border-radius: 8px !important;
 }
 
 /* Containers */
 [data-testid="stContainer"] {
+    border-radius: 12px;
+}
+
+/* Code blocks */
+pre {
+    background-color: #f8fafc !important;
     border-radius: 8px;
+    border: 1px solid #e5e7eb;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------ Header ------------------
+# ------------------ Hero Section ------------------
 
 st.markdown("""
-<h2>AI Comment Reply Helper</h2>
-<p style="color:#6b7280; margin-top:4px;">
-Generate platform-aware, tone-perfect replies for creators and professionals
-</p>
-<hr style="margin: 1.5rem 0;">
+<div class="hero">
+    <h1>AI Comment Reply Helper</h1>
+    <p>
+        Generate human-like, platform-aware replies that build trust,
+        boost engagement, and save time for creators and professionals.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# ------------------ Value Props ------------------
+
+st.markdown("""
+<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.5rem; margin-bottom:2.5rem;">
+    <div><strong>Human-like replies</strong><br><span style="color:#64748b;">No robotic tone</span></div>
+    <div><strong>Platform-aware</strong><br><span style="color:#64748b;">YouTube ≠ LinkedIn</span></div>
+    <div><strong>Fast & reliable</strong><br><span style="color:#64748b;">Replies in seconds</span></div>
+</div>
 """, unsafe_allow_html=True)
 
 # ------------------ API KEY ------------------
@@ -105,7 +131,7 @@ MODEL_NAME = get_supported_model()
 
 if not MODEL_NAME:
     st.error(
-        "No Gemini text-generation models available for this API key.\n\n"
+        "No Gemini text-generation models available.\n"
         "Enable Generative Language API in Google AI Studio."
     )
     st.stop()
@@ -183,12 +209,12 @@ chain = prompt | llm | parser
 # ------------------ Input UI ------------------
 
 with st.container(border=True):
-    st.markdown("#### Input")
+    st.markdown("### Write a comment")
 
     comment = st.text_area(
-        "Comment",
-        placeholder="This video was really helpful, thanks!",
-        height=120
+        label="",
+        placeholder="Paste a comment you received on your post or video…",
+        height=140
     )
 
     col1, col2 = st.columns(2)
@@ -206,18 +232,30 @@ with st.container(border=True):
             index=1
         )
 
-    generate = st.button("Generate Replies", use_container_width=True)
+    st.markdown("<div style='margin-top:1rem'></div>", unsafe_allow_html=True)
+
+    generate = st.button("Generate replies", use_container_width=True)
 
 # ------------------ Reply Card ------------------
 
 def reply_card(title, text):
     with st.container(border=True):
-        st.markdown(f"**{title}**")
+        st.markdown(f"#### {title}")
         st.markdown(
-            f"<div style='color:#374151; margin-top:8px;'>{text}</div>",
+            f"""
+            <div style="
+                background:#f8fafc;
+                padding:1rem;
+                border-radius:10px;
+                border:1px solid #e5e7eb;
+                font-size:0.95rem;
+                color:#0f172a;
+            ">
+                {text}
+            </div>
+            """,
             unsafe_allow_html=True
         )
-        st.code(text, language="text")
 
 # ------------------ Output ------------------
 
