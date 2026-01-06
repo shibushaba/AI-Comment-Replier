@@ -19,89 +19,12 @@ from langchain_core.runnables import RunnableLambda
 
 st.set_page_config(
     page_title="AI Comment Reply Helper",
+    page_icon="💬",
     layout="centered"
 )
 
-# ------------------ Global Styling ------------------
-
-st.markdown("""
-<style>
-.stApp {
-    background-color: #ffffff;
-}
-
-/* Hero */
-.hero {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    padding: 3rem 2.5rem;
-    border-radius: 16px;
-    color: white;
-    margin-bottom: 2.5rem;
-}
-.hero h1 {
-    font-size: 2.4rem;
-    margin-bottom: 0.5rem;
-}
-.hero p {
-    color: #cbd5f5;
-    max-width: 650px;
-    font-size: 1.05rem;
-}
-
-/* Buttons */
-.stButton > button {
-    background-color: #0f172a;
-    color: white;
-    border-radius: 8px;
-    padding: 0.6rem 1rem;
-    border: none;
-    font-weight: 500;
-}
-
-.stButton > button:hover {
-    background-color: #020617;
-}
-
-/* Inputs */
-textarea, select {
-    border-radius: 8px !important;
-}
-
-/* Containers */
-[data-testid="stContainer"] {
-    border-radius: 12px;
-}
-
-/* Code blocks */
-pre {
-    background-color: #f8fafc !important;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ------------------ Hero Section ------------------
-
-st.markdown("""
-<div class="hero">
-    <h1>AI Comment Reply Helper</h1>
-    <p>
-        Generate human-like, platform-aware replies that build trust,
-        boost engagement, and save time for creators and professionals.
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# ------------------ Value Props ------------------
-
-st.markdown("""
-<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.5rem; margin-bottom:2.5rem;">
-    <div><strong>Human-like replies</strong><br><span style="color:#64748b;">No robotic tone</span></div>
-    <div><strong>Platform-aware</strong><br><span style="color:#64748b;">YouTube ≠ LinkedIn</span></div>
-    <div><strong>Fast & reliable</strong><br><span style="color:#64748b;">Replies in seconds</span></div>
-</div>
-""", unsafe_allow_html=True)
+st.title("💬 AI Comment Reply Helper")
+st.caption("Platform-aware • Tone-controlled • Creator-friendly")
 
 # ------------------ API KEY ------------------
 
@@ -109,7 +32,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
 if not GOOGLE_API_KEY:
     st.error(
-        "Gemini API key not found.\n\n"
+        "❌ Gemini API key not found.\n\n"
         "Set it using:\n"
         "setx GOOGLE_API_KEY \"YOUR_API_KEY\""
     )
@@ -131,12 +54,13 @@ MODEL_NAME = get_supported_model()
 
 if not MODEL_NAME:
     st.error(
-        "No Gemini text-generation models available.\n"
-        "Enable Generative Language API in Google AI Studio."
+        "❌ No Gemini text-generation models available for this API key.\n\n"
+        "Your Google project does not have access to Generative Language models.\n"
+        "Enable **Generative Language API** in Google AI Studio or switch provider."
     )
     st.stop()
 
-st.caption(f"Model in use: {MODEL_NAME}")
+st.success(f"✅ Using Gemini model: `{MODEL_NAME}`")
 
 model = genai.GenerativeModel(MODEL_NAME)
 
@@ -206,15 +130,12 @@ llm = RunnableLambda(gemini_call)
 
 chain = prompt | llm | parser
 
-# ------------------ Input UI ------------------
+# ------------------ UI ------------------
 
 with st.container(border=True):
-    st.markdown("### Write a comment")
-
     comment = st.text_area(
-        label="",
-        placeholder="Paste a comment you received on your post or video…",
-        height=140
+        "Paste the comment you received",
+        placeholder="This video was really helpful, thanks!"
     )
 
     col1, col2 = st.columns(2)
@@ -226,41 +147,25 @@ with st.container(border=True):
         )
 
     with col2:
-        tone = st.selectbox(
+        tone = st.select_slider(
             "Tone",
             ["Casual", "Friendly", "Professional", "Formal"],
-            index=1
+            value="Friendly"
         )
 
-    st.markdown("<div style='margin-top:1rem'></div>", unsafe_allow_html=True)
-
-    generate = st.button("Generate replies", use_container_width=True)
-
-# ------------------ Reply Card ------------------
+generate = st.button("✨ Generate Replies", use_container_width=True)
 
 def reply_card(title, text):
     with st.container(border=True):
-        st.markdown(f"#### {title}")
-        st.markdown(
-            f"""
-            <div style="
-                background:#f8fafc;
-                padding:1rem;
-                border-radius:10px;
-                border:1px solid #e5e7eb;
-                font-size:0.95rem;
-                color:#0f172a;
-            ">
-                {text}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown(f"**{title}**")
+        st.write(text)
+        st.code(text)
+        st.button("📋 Copy", key=str(uuid.uuid4()))
 
 # ------------------ Output ------------------
 
 if generate and comment.strip():
-    with st.spinner("Generating replies..."):
+    with st.spinner("Crafting replies..."):
         replies = chain.invoke({
             "comment": comment,
             "platform": platform,
@@ -268,11 +173,11 @@ if generate and comment.strip():
         })
         save_reply(comment, platform, tone, replies)
 
-    st.markdown("### Generated Replies")
+    st.success("Replies ready 👇")
 
-    reply_card("Friendly Reply", replies.friendly_reply)
-    reply_card("Professional Reply", replies.professional_reply)
-    reply_card("Engagement-Boosting Reply", replies.engagement_boosting_reply)
+    reply_card("😊 Friendly Reply", replies.friendly_reply)
+    reply_card("💼 Professional Reply", replies.professional_reply)
+    reply_card("🚀 Engagement-Boosting Reply", replies.engagement_boosting_reply)
 
 elif generate:
-    st.warning("Please enter a comment to continue.")
+    st.warning("Please enter a comment first.")
